@@ -1,0 +1,264 @@
+<div class="analise-page">
+  <app-sidebar rotaAtiva="analitico" [usuarioNome]="usuarioNome" (sair)="logout()"></app-sidebar>
+
+  <main class="analise-main">
+    <header class="analise-header">
+      <h2>Módulo analítico</h2>
+      <p>Envie suas planilhas de vendas e/ou estoque para gerar um relatório com indicadores e recomendações.</p>
+    </header>
+
+    <details class="limites" *ngIf="!carregandoLimites">
+      <summary class="limites__resumo">Configurar limites de alerta</summary>
+
+      <div class="limites__conteudo">
+        <p class="limites__hint">
+          Esses limites definem quando o relatório marca um prato ou insumo como anomalia (RF-10). Ajuste conforme o
+          tipo da sua operação — um rodízio, por exemplo, costuma ter mais perda de insumo que um bistrô à la carte.
+        </p>
+
+        <div class="limites__campo">
+          <label for="margem-minima">Margem mínima esperada por prato</label>
+          <div class="limites__input-percentual">
+            <input
+              id="margem-minima"
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              [(ngModel)]="margemMinimaPercentual"
+              name="margemMinima"
+            />
+            <span>%</span>
+          </div>
+          <p class="limites__campo-hint">Pratos com margem abaixo disso são sinalizados no relatório.</p>
+        </div>
+
+        <div class="limites__campo">
+          <label for="perda-alerta">Perda de insumo que dispara alerta</label>
+          <div class="limites__input-percentual">
+            <input
+              id="perda-alerta"
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              [(ngModel)]="percentualPerdaPercentual"
+              name="percentualPerda"
+            />
+            <span>%</span>
+          </div>
+          <p class="limites__campo-hint">Insumos com perda acima disso são sinalizados no relatório.</p>
+        </div>
+
+        <button type="button" class="limites__botao" [disabled]="salvandoLimites" (click)="salvarLimites()">
+          {{ salvandoLimites ? 'Salvando...' : 'Salvar limites' }}
+        </button>
+        <p class="limites__ok" *ngIf="limitesSalvos">✓ Limites salvos — os próximos relatórios já usam esses valores.</p>
+        <p class="limites__erro" *ngIf="erroLimites">{{ erroLimites }}</p>
+      </div>
+    </details>
+
+    <section class="uploads">
+      <div class="upload-card">
+        <h3>Planilha de vendas</h3>
+        <p class="upload-card__hint">Colunas aceitas: prato, quantidade, preço, custo (opcional), data (opcional).</p>
+        <input type="file" accept=".csv,.xlsx,.xls" (change)="onArquivoSelecionado($event, 'vendas')" />
+        <button type="button" [disabled]="!vendas.arquivoSelecionado || vendas.enviando" (click)="enviar('vendas')">
+          {{ vendas.enviando ? 'Enviando...' : 'Enviar' }}
+        </button>
+
+        <div class="upload-card__progresso" *ngIf="vendas.enviando" aria-hidden="true">
+          <div class="skeleton skeleton--bar-sm"></div>
+        </div>
+        <p class="upload-card__ok" *ngIf="vendas.resultado as r">
+          ✓ {{ r.nomeArquivoOriginal }} — {{ r.quantidadeLinhas }} linha(s) processada(s)
+        </p>
+        <p class="upload-card__erro" *ngIf="vendas.erro">{{ vendas.erro }}</p>
+      </div>
+
+      <div class="upload-card">
+        <h3>Planilha de estoque</h3>
+        <p class="upload-card__hint">Colunas aceitas: insumo, quantidade, custo, perda (opcional), data (opcional).</p>
+        <input type="file" accept=".csv,.xlsx,.xls" (change)="onArquivoSelecionado($event, 'estoque')" />
+        <button type="button" [disabled]="!estoque.arquivoSelecionado || estoque.enviando" (click)="enviar('estoque')">
+          {{ estoque.enviando ? 'Enviando...' : 'Enviar' }}
+        </button>
+
+        <div class="upload-card__progresso" *ngIf="estoque.enviando" aria-hidden="true">
+          <div class="skeleton skeleton--bar-sm"></div>
+        </div>
+        <p class="upload-card__ok" *ngIf="estoque.resultado as r">
+          ✓ {{ r.nomeArquivoOriginal }} — {{ r.quantidadeLinhas }} linha(s) processada(s)
+        </p>
+        <p class="upload-card__erro" *ngIf="estoque.erro">{{ estoque.erro }}</p>
+      </div>
+    </section>
+
+    <section class="gerar-relatorio">
+      <button type="button" class="gerar-relatorio__botao" [disabled]="!podeGerarRelatorio" (click)="gerarRelatorio()">
+        {{ gerandoRelatorio ? 'Gerando relatório...' : 'Gerar relatório' }}
+      </button>
+      <p class="gerar-relatorio__erro" *ngIf="erroRelatorio && !limiteUsoExcedido">{{ erroRelatorio }}</p>
+      <p class="gerar-relatorio__limite" *ngIf="erroRelatorio && limiteUsoExcedido">
+        {{ erroRelatorio }}
+        <a routerLink="/planos">Fazer upgrade</a>
+      </p>
+    </section>
+
+    <section class="relatorio-vazio" *ngIf="!relatorio && !gerandoRelatorio && !erroRelatorio">
+      <div class="relatorio-vazio__icone">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path d="M4 20V10M12 20V4M20 20v-7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+      <p class="relatorio-vazio__titulo">Nenhum relatório gerado ainda</p>
+      <ol class="relatorio-vazio__passos">
+        <li>Envie a planilha de vendas e/ou estoque acima</li>
+        <li>Clique em "Gerar relatório"</li>
+        <li>Veja indicadores, alertas e recomendações aqui</li>
+      </ol>
+    </section>
+
+    <section class="relatorio-skeleton" *ngIf="gerandoRelatorio" aria-hidden="true">
+      <div class="skeleton skeleton--bar-lg"></div>
+      <div class="skeleton skeleton--bar-sm"></div>
+      <div class="relatorio-skeleton__tabela">
+        <div class="skeleton skeleton--row" *ngFor="let _ of [0, 1, 2]"></div>
+      </div>
+      <div class="skeleton skeleton--line"></div>
+      <div class="skeleton skeleton--line"></div>
+      <div class="skeleton skeleton--line skeleton--line-short"></div>
+    </section>
+
+    <section class="relatorio" *ngIf="relatorio as rel">
+      <div class="relatorio__cabecalho">
+        <h3>Relatório</h3>
+        <div class="relatorio__downloads">
+          <button type="button" (click)="baixarPdf()" [disabled]="baixandoPdf">
+            {{ baixandoPdf ? 'Baixando...' : 'Baixar PDF' }}
+          </button>
+          <button type="button" (click)="baixarExcel()" [disabled]="baixandoExcel">
+            {{ baixandoExcel ? 'Baixando...' : 'Baixar Excel' }}
+          </button>
+        </div>
+      </div>
+
+      <p class="relatorio__cmv"><strong>CMV calculado:</strong> {{ formatarPercentual(rel.cmvCalculado) }}</p>
+
+      <table class="relatorio__tabela" *ngIf="rel.indicadoresPrato.length > 0">
+        <thead>
+          <tr>
+            <th>Prato</th>
+            <th>Margem</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let indicador of rel.indicadoresPrato" [class.relatorio__tabela-linha--alerta]="indicador.alerta">
+            <td>{{ indicador.nomePrato }}</td>
+            <td>{{ formatarPercentual(indicador.margemCalculada) }}</td>
+            <td>
+              <svg
+                *ngIf="indicador.alerta"
+                class="alerta-icone"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="relatorio__texto">{{ rel.conteudoTextoIA }}</div>
+
+      <div class="pergunta">
+        <h4>Perguntar sobre este relatório</h4>
+        <div class="pergunta__form">
+          <input
+            type="text"
+            placeholder='Ex.: "Por que esse prato está com margem baixa?"'
+            [(ngModel)]="pergunta"
+            (keydown.enter)="enviarPergunta()"
+          />
+          <button type="button" [disabled]="!pergunta.trim() || perguntando" (click)="enviarPergunta()">
+            {{ perguntando ? 'Perguntando...' : 'Perguntar' }}
+          </button>
+        </div>
+        <p class="pergunta__resposta" *ngIf="respostaPergunta">{{ respostaPergunta }}</p>
+        <p class="pergunta__erro" *ngIf="erroPergunta">{{ erroPergunta }}</p>
+      </div>
+    </section>
+
+    <section class="comparacao" *ngIf="!carregandoHistorico && historico.length > 1">
+      <h3>Comparar relatórios (mês a mês)</h3>
+      <p class="comparacao__hint">Escolha dois relatórios do histórico para ver a variação de CMV e margem por prato.</p>
+
+      <div class="comparacao__selects">
+        <div class="comparacao__campo">
+          <label for="relatorio-atual">Relatório atual</label>
+          <select id="relatorio-atual" [(ngModel)]="idAtualSelecionado" name="idAtual">
+            <option [ngValue]="null">Selecione...</option>
+            <option *ngFor="let r of historico" [ngValue]="r.id">
+              #{{ r.id }} — {{ formatarData(r.geradoEm) }} ({{ formatarPercentual(r.cmvCalculado) }})
+            </option>
+          </select>
+        </div>
+
+        <div class="comparacao__campo">
+          <label for="relatorio-anterior">Relatório anterior</label>
+          <select id="relatorio-anterior" [(ngModel)]="idAnteriorSelecionado" name="idAnterior">
+            <option [ngValue]="null">Selecione...</option>
+            <option *ngFor="let r of historico" [ngValue]="r.id">
+              #{{ r.id }} — {{ formatarData(r.geradoEm) }} ({{ formatarPercentual(r.cmvCalculado) }})
+            </option>
+          </select>
+        </div>
+
+        <button type="button" class="comparacao__botao" [disabled]="!podeComparar" (click)="comparar()">
+          {{ comparando ? 'Comparando...' : 'Comparar' }}
+        </button>
+      </div>
+
+      <p class="comparacao__erro" *ngIf="erroComparacao">{{ erroComparacao }}</p>
+
+      <div class="comparacao__resultado" *ngIf="comparacao as comp">
+        <p class="comparacao__cmv">
+          <strong>CMV:</strong> {{ formatarPercentual(comp.cmvAnterior) }} → {{ formatarPercentual(comp.cmvAtual) }}
+          <span class="comparacao__delta">({{ formatarDeltaPercentual(comp.deltaCmv) }})</span>
+        </p>
+
+        <table class="comparacao__tabela" *ngIf="comp.pratos.length > 0">
+          <thead>
+            <tr>
+              <th>Prato</th>
+              <th>Margem anterior</th>
+              <th>Margem atual</th>
+              <th>Variação</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let prato of comp.pratos">
+              <td>{{ prato.nomePrato }}</td>
+              <td>{{ formatarPercentual(prato.margemAnterior) }}</td>
+              <td>{{ formatarPercentual(prato.margemAtual) }}</td>
+              <td>{{ formatarDeltaPercentual(prato.deltaMargem) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="comparacao__vazio" *ngIf="comp.pratos.length === 0">
+          Nenhum prato em comum entre os dois relatórios.
+        </p>
+      </div>
+    </section>
+  </main>
+</div>

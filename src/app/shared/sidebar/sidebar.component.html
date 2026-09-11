@@ -1,0 +1,38 @@
+<aside class="sidebar" [class.sidebar--aberta]="menuAberto">
+  <div class="sidebar__header">
+    <div class="sidebar__logo">R</div>
+    <div>
+      <h1>RestorIA</h1>
+      <p>Assistente de gestão</p>
+    </div>
+
+    <button
+      class="sidebar__toggle"
+      type="button"
+      (click)="alternarMenu()"
+      [attr.aria-expanded]="menuAberto"
+      aria-label="Alternar menu"
+    >
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="sidebar__body">
+    <ng-content select="[sidebar-top]"></ng-content>
+
+    <nav class="sidebar__nav">
+      <a class="sidebar__nav-link" [class.sidebar__nav-link--active]="rotaAtiva === 'consultivo'" routerLink="/">Consultivo</a>
+      <a class="sidebar__nav-link" [class.sidebar__nav-link--active]="rotaAtiva === 'analitico'" routerLink="/analise">Analítico</a>
+      <a class="sidebar__nav-link" [class.sidebar__nav-link--active]="rotaAtiva === 'planos'" routerLink="/planos">Plano</a>
+    </nav>
+
+    <ng-content select="[sidebar-middle]"></ng-content>
+
+    <div class="sidebar__footer">
+      <span class="sidebar__user" *ngIf="usuarioNome">{{ usuarioNome }}</span>
+      <button class="sidebar__logout" type="button" (click)="sair.emit()">Sair</button>
+    </div>
+  </div>
+</aside>

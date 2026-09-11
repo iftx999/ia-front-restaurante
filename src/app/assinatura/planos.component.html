@@ -1,0 +1,61 @@
+<div class="planos-page">
+  <app-sidebar rotaAtiva="planos" [usuarioNome]="usuarioNome" (sair)="logout()"></app-sidebar>
+
+  <main class="planos-main">
+    <header class="planos-header">
+      <h2>Seu plano</h2>
+      <p>Acompanhe seu uso do mês e faça upgrade quando precisar de mais.</p>
+    </header>
+
+    <p class="planos-carregando" *ngIf="carregando">Carregando...</p>
+
+    <p class="planos-erro" *ngIf="erro">{{ erro }}</p>
+
+    <section class="plano-atual" *ngIf="assinatura as a">
+      <div class="plano-atual__cabecalho">
+        <span class="plano-atual__badge" [class.plano-atual__badge--pro]="a.plano === 'PRO'">
+          {{ a.plano === 'PRO' ? 'Plano PRO' : 'Plano Grátis' }}
+        </span>
+        <span class="plano-atual__status" *ngIf="a.status !== 'ATIVA'">{{ a.status === 'INADIMPLENTE' ? 'Pagamento pendente' : 'Cancelado' }}</span>
+      </div>
+
+      <div class="plano-atual__uso">
+        <div class="uso-item">
+          <div class="uso-item__cabecalho">
+            <span>Mensagens no chat</span>
+            <span>{{ a.mensagensUsadasNoMes }} / {{ a.mensagensLimiteNoMes }}</span>
+          </div>
+          <div class="uso-item__barra">
+            <div
+              class="uso-item__preenchido"
+              [style.width.%]="(a.mensagensUsadasNoMes / a.mensagensLimiteNoMes) * 100"
+            ></div>
+          </div>
+        </div>
+
+        <div class="uso-item">
+          <div class="uso-item__cabecalho">
+            <span>Relatórios analíticos</span>
+            <span>{{ a.relatoriosUsadosNoMes }} / {{ a.relatoriosLimiteNoMes }}</span>
+          </div>
+          <div class="uso-item__barra">
+            <div
+              class="uso-item__preenchido"
+              [style.width.%]="(a.relatoriosUsadosNoMes / a.relatoriosLimiteNoMes) * 100"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="plano-atual__upgrade"
+        *ngIf="a.plano === 'GRATIS'"
+        [disabled]="iniciandoCheckout"
+        (click)="fazerUpgrade()"
+      >
+        {{ iniciandoCheckout ? 'Abrindo checkout...' : 'Fazer upgrade para o PRO' }}
+      </button>
+    </section>
+  </main>
+</div>

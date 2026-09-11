@@ -1,0 +1,40 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-card__logo">R</div>
+    <h1>RestorIA</h1>
+    <p class="auth-card__subtitle">Assistente de gestão para o seu restaurante</p>
+
+    <form (ngSubmit)="submit()">
+      <ng-container *ngIf="modo === 'registro'">
+        <label>
+          <span>Seu nome</span>
+          <input type="text" name="nome" [(ngModel)]="nome" required autocomplete="name" />
+        </label>
+        <label>
+          <span>Nome do restaurante</span>
+          <input type="text" name="nomeRestaurante" [(ngModel)]="nomeRestaurante" required autocomplete="organization" />
+        </label>
+      </ng-container>
+
+      <label>
+        <span>E-mail</span>
+        <input type="email" name="email" [(ngModel)]="email" required autocomplete="email" />
+      </label>
+
+      <label>
+        <span>Senha</span>
+        <input type="password" name="senha" [(ngModel)]="senha" required minlength="6" autocomplete="current-password" />
+      </label>
+
+      <div class="auth-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+      <button type="submit" [disabled]="loading">
+        {{ loading ? 'Aguarde...' : (modo === 'login' ? 'Entrar' : 'Criar conta') }}
+      </button>
+    </form>
+
+    <button type="button" class="auth-toggle" (click)="alternarModo()">
+      {{ modo === 'login' ? 'Não tem conta? Criar uma' : 'Já tem conta? Entrar' }}
+    </button>
+  </div>
+</div>
