@@ -58,11 +58,10 @@
     height: 2.25rem;
     flex-shrink: 0;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-strong));
-    color: #08120c;
+    background: var(--color-accent);
+    color: var(--color-accent-contrast);
     font-weight: 700;
     font-size: 1.05rem;
-    box-shadow: 0 0 16px rgba(61, 220, 132, 0.35);
   }
 
   h1 {
@@ -102,7 +101,7 @@
     &--active {
       background: var(--color-accent-soft);
       color: var(--color-accent);
-      box-shadow: inset 0 0 0 1px rgba(61, 220, 132, 0.25);
+      box-shadow: inset 0 0 0 1px var(--color-accent-glow);
     }
   }
 
