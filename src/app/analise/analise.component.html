@@ -62,6 +62,9 @@
       <div class="upload-card">
         <h3>Planilha de vendas</h3>
         <p class="upload-card__hint">Colunas aceitas: prato, quantidade, preço, custo (opcional), data (opcional).</p>
+        <a class="upload-card__exemplo" href="/exemplos/planilha-vendas-exemplo.csv" download>
+          Baixar planilha de exemplo (.csv)
+        </a>
         <input type="file" accept=".csv,.xlsx,.xls" (change)="onArquivoSelecionado($event, 'vendas')" />
         <button type="button" [disabled]="!vendas.arquivoSelecionado || vendas.enviando" (click)="enviar('vendas')">
           {{ vendas.enviando ? 'Enviando...' : 'Enviar' }}
@@ -79,6 +82,9 @@
       <div class="upload-card">
         <h3>Planilha de estoque</h3>
         <p class="upload-card__hint">Colunas aceitas: insumo, quantidade, custo, perda (opcional), data (opcional).</p>
+        <a class="upload-card__exemplo" href="/exemplos/planilha-estoque-exemplo.csv" download>
+          Baixar planilha de exemplo (.csv)
+        </a>
         <input type="file" accept=".csv,.xlsx,.xls" (change)="onArquivoSelecionado($event, 'estoque')" />
         <button type="button" [disabled]="!estoque.arquivoSelecionado || estoque.enviando" (click)="enviar('estoque')">
           {{ estoque.enviando ? 'Enviando...' : 'Enviar' }}
