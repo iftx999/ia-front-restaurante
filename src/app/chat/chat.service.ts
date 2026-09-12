@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { ChatRequest, ChatResponse, ConversaDetalhe, ConversaResumo } from './chat.model';
+import { ChatRequest, ChatResponse, ConversaDetalhe, ConversaResumo, ImagemAnexada } from './chat.model';
 import { AuthService } from '../core/auth.service';
 import { Router } from '@angular/router';
 
@@ -63,9 +63,15 @@ export class ChatService {
     mensagem: string,
     conversationId: string | null,
     handlers: ChatStreamHandlers,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    imagem?: ImagemAnexada | null
   ): Promise<void> {
-    const body: ChatRequest = { conversationId, mensagem };
+    const body: ChatRequest = {
+      conversationId,
+      mensagem,
+      imagemBase64: imagem?.base64 ?? null,
+      imagemMediaType: imagem?.mediaType ?? null
+    };
 
     const token = this.authService.getToken();
 

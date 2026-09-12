@@ -12,7 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { ChatService } from './chat.service';
-import { ChatMessage, ChatSession, ConversaResumo } from './chat.model';
+import { ChatMessage, ChatSession, ConversaResumo, ImagemAnexada } from './chat.model';
 import { AuthService } from '../core/auth.service';
 import { SidebarComponent } from '../shared/sidebar/sidebar.component';
 
@@ -25,6 +25,9 @@ const TAMANHO_MAX_TITULO = 40;
 function truncarTitulo(texto: string): string {
   return texto.length > TAMANHO_MAX_TITULO ? texto.slice(0, TAMANHO_MAX_TITULO) + '…' : texto;
 }
+
+const TIPOS_IMAGEM_ACEITOS = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const TAMANHO_MAX_IMAGEM_BYTES = 5 * 1024 * 1024;
 
 function criarSessao(): ChatSession {
   return {
@@ -66,6 +69,8 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
   sessions: ChatSession[] = [criarSessao()];
   activeSessionId: string = this.sessions[0].localId;
   currentMessage = '';
+  pendingImage: ImagemAnexada | null = null;
+  imageError: string | null = null;
 
   /** Onboarding conversacional de primeiro acesso (RF-05): antes de liberar
    * perguntas livres, a IA confirma nome e nome do restaurante do usuário. */
@@ -204,6 +209,46 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
     });
   }
 
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const arquivo = input.files?.[0] ?? null;
+    input.value = '';
+
+    if (!arquivo) {
+      return;
+    }
+
+    this.imageError = null;
+
+    if (!TIPOS_IMAGEM_ACEITOS.includes(arquivo.type)) {
+      this.imageError = 'Formato não suportado. Use JPEG, PNG, GIF ou WebP.';
+      return;
+    }
+
+    if (arquivo.size > TAMANHO_MAX_IMAGEM_BYTES) {
+      this.imageError = 'Imagem muito grande (limite de 5MB).';
+      return;
+    }
+
+    const leitor = new FileReader();
+    leitor.onload = () => {
+      const dataUrl = leitor.result as string;
+      const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
+      this.pendingImage = { dataUrl, base64, mediaType: arquivo.type };
+      this.cdr.markForCheck();
+    };
+    leitor.onerror = () => {
+      this.imageError = 'Não foi possível ler essa imagem.';
+      this.cdr.markForCheck();
+    };
+    leitor.readAsDataURL(arquivo);
+  }
+
+  removePendingImage(): void {
+    this.pendingImage = null;
+    this.imageError = null;
+  }
+
   sendMessage(): void {
     if (this.onboardingEtapa) {
       this.responderOnboarding();
@@ -211,17 +256,22 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
     }
 
     const mensagem = this.currentMessage.trim();
+    const imagem = this.pendingImage;
     const sessao = this.activeSession;
-    if (!mensagem || sessao.loading) {
+    if ((!mensagem && !imagem) || sessao.loading) {
       return;
     }
 
+    const textoMensagem = mensagem || 'O que você vê nessa imagem?';
+
     if (sessao.messages.length === 0) {
-      sessao.title = mensagem.length > 40 ? mensagem.slice(0, 40) + '…' : mensagem;
+      sessao.title = textoMensagem.length > 40 ? textoMensagem.slice(0, 40) + '…' : textoMensagem;
     }
 
-    sessao.messages.push({ role: 'user', text: mensagem });
+    sessao.messages.push({ role: 'user', text: textoMensagem, imageDataUrl: imagem?.dataUrl });
     this.currentMessage = '';
+    this.pendingImage = null;
+    this.imageError = null;
     sessao.errorMessage = null;
     sessao.limiteUsoExcedido = false;
     sessao.loading = true;
@@ -235,7 +285,7 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
     this.streamsAtivos.set(sessao.localId, controller);
 
     this.chatService.sendMessageStream(
-      mensagem,
+      textoMensagem,
       sessao.conversationId,
       {
         onStart: (conversationId) => {
@@ -267,7 +317,8 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
           this.cdr.markForCheck();
         }
       },
-      controller.signal
+      controller.signal,
+      imagem
     );
   }
 

@@ -65,6 +65,7 @@
             <span class="typing-dot"></span>
           </ng-container>
           <ng-template #textoNormal>
+            <img class="message__image" *ngIf="message.imageDataUrl" [src]="message.imageDataUrl" alt="Imagem enviada" />
             <p class="message__text">{{ message.text }}</p>
           </ng-template>
         </div>
@@ -76,7 +77,40 @@
       <a *ngIf="activeSession.limiteUsoExcedido" routerLink="/planos" class="error-banner__upgrade">Fazer upgrade</a>
     </div>
 
+    <div class="image-error" *ngIf="imageError">{{ imageError }}</div>
+
+    <div class="pending-image" *ngIf="pendingImage">
+      <img [src]="pendingImage.dataUrl" alt="Pré-visualização da imagem" />
+      <button type="button" class="pending-image__remove" (click)="removePendingImage()" aria-label="Remover imagem">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6 6 18M6 6l12 12" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
     <form class="chat-input" (ngSubmit)="sendMessage()">
+      <input
+        #imagemInput
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        hidden
+        (change)="onImageSelected($event)"
+      />
+      <button
+        type="button"
+        class="chat-input__anexar"
+        [disabled]="activeSession.loading || !!onboardingEtapa"
+        (click)="imagemInput.click()"
+        aria-label="Anexar imagem"
+      >
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2">
+          <path
+            d="M21.44 11.05 12.25 20.24a5 5 0 0 1-7.07-7.07l8.49-8.49a3.5 3.5 0 0 1 4.95 4.95l-8.49 8.49a2 2 0 0 1-2.83-2.83l7.78-7.78"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
       <textarea
         name="mensagem"
         rows="1"
@@ -85,7 +119,7 @@
         (keydown.enter)="onEnterKey($event)"
         [disabled]="activeSession.loading"
       ></textarea>
-      <button type="submit" [disabled]="activeSession.loading || !currentMessage.trim()" aria-label="Enviar">
+      <button type="submit" [disabled]="activeSession.loading || (!currentMessage.trim() && !pendingImage)" aria-label="Enviar">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M22 2 11 13" stroke-linecap="round" stroke-linejoin="round" />
           <path d="M22 2 15 22l-4-9-9-4 20-7Z" stroke-linecap="round" stroke-linejoin="round" />

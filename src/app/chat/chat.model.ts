@@ -2,12 +2,23 @@
 export interface ChatMessage {
   role: 'user' | 'assistant';
   text: string;
+  /** Data URL da imagem anexada (só existe localmente, não vem do backend num refresh). */
+  imageDataUrl?: string;
 }
 
 /** Corpo da requisição enviada para POST /api/chat */
 export interface ChatRequest {
   conversationId: string | null;
   mensagem: string;
+  imagemBase64?: string | null;
+  imagemMediaType?: string | null;
+}
+
+/** Imagem selecionada pelo usuário, pronta para envio (anexo do chat). */
+export interface ImagemAnexada {
+  dataUrl: string;
+  base64: string;
+  mediaType: string;
 }
 
 /** Corpo da resposta recebida de POST /api/chat */
