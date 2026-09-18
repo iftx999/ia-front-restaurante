@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 
 import { ChatService } from './chat.service';
@@ -104,6 +105,36 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
 
   get usuarioNome(): string | null {
     return this.authService.currentUser()?.nome ?? null;
+  }
+
+  get emailNaoVerificado(): boolean {
+    const usuario = this.authService.currentUser();
+    return !!usuario && !usuario.emailVerificado;
+  }
+
+  reenviandoVerificacao = false;
+  verificacaoReenviada = false;
+  erroReenvioVerificacao: string | null = null;
+
+  reenviarVerificacaoEmail(): void {
+    if (this.reenviandoVerificacao) {
+      return;
+    }
+    this.reenviandoVerificacao = true;
+    this.verificacaoReenviada = false;
+    this.erroReenvioVerificacao = null;
+    this.authService.reenviarVerificacaoEmail().subscribe({
+      next: () => {
+        this.reenviandoVerificacao = false;
+        this.verificacaoReenviada = true;
+        this.cdr.markForCheck();
+      },
+      error: (erro: HttpErrorResponse) => {
+        this.reenviandoVerificacao = false;
+        this.erroReenvioVerificacao = erro.error?.detalhes?.[0] ?? 'Não foi possível reenviar agora.';
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   get placeholderInput(): string {
@@ -272,6 +303,7 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
     this.currentMessage = '';
     this.pendingImage = null;
     this.imageError = null;
+    this.mostrarAtalhosPrompt = false;
     sessao.errorMessage = null;
     sessao.limiteUsoExcedido = false;
     sessao.loading = true;
@@ -383,6 +415,131 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
 
   usarExemplo(texto: string): void {
     this.currentMessage = texto;
+  }
+
+  /** Atalhos de termos prontos para montar prompts de imagem (usados ao anexar
+   * uma foto de prato e pedir pra IA melhorar/editar). Os valores ficam em
+   * inglês de propósito — é o vocabulário que os modelos de geração de imagem
+   * reconhecem melhor. */
+  mostrarAtalhosPrompt = false;
+
+  readonly categoriasAtalhosPrompt: { titulo: string; itens: { label: string; valor: string }[] }[] = [
+    {
+      titulo: 'Melhorar uma foto',
+      itens: [
+        { label: 'Aparência fotorrealista', valor: 'photorealistic' },
+        { label: 'Fotografia profissional', valor: 'high-end photography' },
+        { label: 'Iluminação profissional', valor: 'professional lighting' },
+        { label: 'Iluminação natural', valor: 'natural lighting' },
+        { label: 'Luz suave', valor: 'soft lighting' },
+        { label: 'Iluminação cinematográfica', valor: 'cinematic lighting' },
+        { label: 'Fundo desfocado', valor: 'shallow depth of field' },
+        { label: 'Mais nitidez', valor: 'sharp details' },
+        { label: 'Maior nível de detalhes', valor: 'high detail' },
+        { label: 'Textura de pele natural', valor: 'natural skin texture' },
+        { label: 'Tratamento profissional de cor', valor: 'color grading' },
+        { label: 'Maior alcance luz/sombra (HDR)', valor: 'HDR' }
+      ]
+    },
+    {
+      titulo: 'Aparência de câmera',
+      itens: [
+        { label: 'Câmera profissional', valor: 'shot on a professional camera' },
+        { label: 'Lente 35mm', valor: '35mm photography' },
+        { label: 'Retrato com lente 85mm', valor: '85mm portrait lens' },
+        { label: 'Fotografia cinematográfica', valor: 'cinematic photography' },
+        { label: 'Fotografia editorial', valor: 'editorial photography' },
+        { label: 'Fotografia de estúdio', valor: 'studio photography' },
+        { label: 'Fotografia de moda', valor: 'fashion photography' },
+        { label: 'Fotografia documental', valor: 'documentary photography' },
+        { label: 'Fotografia espontânea', valor: 'candid photography' }
+      ]
+    },
+    {
+      titulo: 'Estilos',
+      itens: [
+        { label: 'Anime', valor: 'anime' },
+        { label: 'Quadrinhos', valor: 'comic book' },
+        { label: 'Desenho animado', valor: 'cartoon' },
+        { label: 'Aquarela', valor: 'watercolor' },
+        { label: 'Pintura a óleo', valor: 'oil painting' },
+        { label: 'Desenho a lápis', valor: 'pencil drawing' },
+        { label: 'Lápis de cor', valor: 'colored pencil' },
+        { label: 'Argila 3D', valor: 'clay 3D' },
+        { label: 'Render 3D', valor: '3D render' },
+        { label: 'Pixel art', valor: 'pixel art' },
+        { label: 'Vintage', valor: 'vintage' },
+        { label: 'Retrô', valor: 'retro' },
+        { label: 'Minimalista', valor: 'minimalist' },
+        { label: 'Surreal', valor: 'surreal' },
+        { label: 'Pop art', valor: 'pop art' },
+        { label: 'Editorial', valor: 'editorial' },
+        { label: 'Foto analógica', valor: 'film photography' }
+      ]
+    },
+    {
+      titulo: 'Estética',
+      itens: [
+        { label: 'Tons quentes', valor: 'warm tones' },
+        { label: 'Tons frios', valor: 'cool tones' },
+        { label: 'Cores pastel', valor: 'pastel colors' },
+        { label: 'Cores suaves', valor: 'muted colors' },
+        { label: 'Cores vibrantes', valor: 'vibrant colors' },
+        { label: 'Visual escuro/cinematográfico', valor: 'dark cinematic' },
+        { label: 'Atmosfera dramática', valor: 'moody atmosphere' },
+        { label: 'Atmosfera sonhadora', valor: 'dreamy atmosphere' },
+        { label: 'Atmosfera aconchegante', valor: 'cozy atmosphere' },
+        { label: 'Contraste dramático', valor: 'dramatic contrast' }
+      ]
+    },
+    {
+      titulo: 'Preservar pessoa (ao editar)',
+      itens: [
+        { label: 'Preservar identidade da pessoa', valor: "preserve the person's identity" },
+        { label: 'Manter o rosto inalterado', valor: 'keep the face unchanged' },
+        { label: 'Preservar traços faciais', valor: 'preserve facial features' },
+        { label: 'Manter a pose original', valor: 'maintain the original pose' },
+        { label: 'Preservar proporções do corpo', valor: 'preserve body proportions' },
+        { label: 'Manter a composição original', valor: 'keep the original composition' },
+        { label: 'Mudar só [elemento]', valor: 'change only [elemento]' },
+        { label: 'Resto permanece inalterado', valor: 'everything else remains unchanged' }
+      ]
+    },
+    {
+      titulo: 'Trocar algo na imagem',
+      itens: [
+        { label: 'Trocar roupa', valor: 'change only the clothing' },
+        { label: 'Trocar cenário', valor: 'replace the background' },
+        { label: 'Mudar cabelo', valor: 'change only the hairstyle' },
+        { label: 'Adicionar objeto', valor: 'add [objeto] naturally into the scene' },
+        { label: 'Remover objeto', valor: 'remove [objeto] and reconstruct the background naturally' },
+        { label: 'Dia → noite', valor: 'transform the scene from daytime to nighttime' }
+      ]
+    },
+    {
+      titulo: 'Cenas engraçadas',
+      itens: [
+        { label: 'Cena cômica', valor: 'comedic scene' },
+        { label: 'Pose exagerada', valor: 'exaggerated pose' },
+        { label: 'Situação absurda', valor: 'absurd situation' },
+        { label: 'Divertido', valor: 'playful' },
+        { label: 'Humorístico', valor: 'humorous' },
+        { label: 'Situação inesperada', valor: 'unexpected situation' },
+        { label: 'Timing cômico', valor: 'comedic timing' },
+        { label: 'Over the top', valor: 'over-the-top' },
+        { label: 'Humor deadpan', valor: 'deadpan humor' },
+        { label: 'Estética de meme viral', valor: 'viral meme aesthetic' }
+      ]
+    }
+  ];
+
+  toggleAtalhosPrompt(): void {
+    this.mostrarAtalhosPrompt = !this.mostrarAtalhosPrompt;
+  }
+
+  inserirAtalho(valor: string): void {
+    const atual = this.currentMessage.trim();
+    this.currentMessage = atual ? `${atual}, ${valor}` : valor;
   }
 
   onEnterKey(event: Event): void {

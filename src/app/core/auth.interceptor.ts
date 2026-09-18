@@ -5,16 +5,20 @@ import { catchError, throwError } from 'rxjs';
 
 import { AuthService } from './auth.service';
 
+/** Únicas rotas de /api/auth/** que não exigem token — as demais (ex: reenviar-verificacao) precisam. */
+const ROTAS_AUTH_PUBLICAS = ['/api/auth/login', '/api/auth/registrar', '/api/auth/verificar-email'];
+
 /**
- * Anexa `Authorization: Bearer <token>` em toda chamada HttpClient (exceto
- * /api/auth/**, que não precisa de token). Em 401 (token ausente/expirado),
- * desloga e manda pra tela de login.
+ * Anexa `Authorization: Bearer <token>` em toda chamada HttpClient, exceto
+ * nas rotas de auth públicas (login/registro/verificação de e-mail). Em 401
+ * (token ausente/expirado) numa rota que exige token, desloga e manda pra
+ * tela de login.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  const isAuthRequest = req.url.startsWith('/api/auth');
+  const isAuthRequest = ROTAS_AUTH_PUBLICAS.some((rota) => req.url.startsWith(rota));
   const token = authService.getToken();
 
   const requisicao = !isAuthRequest && token

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../core/auth.service';
 
@@ -26,15 +26,34 @@ export class LoginComponent {
   senha = '';
   nomeRestaurante = '';
 
+  /** Login com Google (RF pendente): aguardando GOOGLE_CLIENT_ID — ver
+   * docs/07-login-google-oauth.md. Botão fica visível mas desabilitado até lá. */
+  readonly googleIndisponivel = true;
+
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    // Permite deep-link direto pro cadastro (usado pelos CTAs da landing page: /login?modo=registro)
+    if (this.route.snapshot.queryParamMap.get('modo') === 'registro') {
+      this.modo = 'registro';
+    }
+  }
 
   alternarModo(): void {
     this.modo = this.modo === 'login' ? 'registro' : 'login';
     this.errorMessage = null;
+  }
+
+  continuarComGoogle(): void {
+    if (this.googleIndisponivel) {
+      return;
+    }
+    // TODO(docs/07-login-google-oauth.md): iniciar o fluxo do Google Identity
+    // Services e enviar o idToken pra POST /api/auth/google quando o
+    // GOOGLE_CLIENT_ID estiver configurado.
   }
 
   submit(): void {

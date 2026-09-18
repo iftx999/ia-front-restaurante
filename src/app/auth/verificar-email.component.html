@@ -1,0 +1,31 @@
+<div class="verificar-page">
+  <div class="verificar-card">
+    <ng-container [ngSwitch]="estado">
+      <ng-container *ngSwitchCase="'carregando'">
+        <div class="verificar-card__icon verificar-card__icon--neutro">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        </div>
+        <h1>Confirmando seu e-mail...</h1>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'sucesso'">
+        <div class="verificar-card__icon verificar-card__icon--sucesso">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h1>E-mail confirmado!</h1>
+        <p>Sua conta está verificada. Pode voltar pro app.</p>
+        <a class="verificar-card__botao" routerLink="/">Ir para o app</a>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'erro'">
+        <div class="verificar-card__icon verificar-card__icon--erro">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+        </div>
+        <h1>Não foi possível confirmar</h1>
+        <p>{{ mensagemErro }}</p>
+        <p class="verificar-card__dica">Volte pro app e peça um novo link de verificação.</p>
+        <a class="verificar-card__botao" routerLink="/">Ir para o app</a>
+      </ng-container>
+    </ng-container>
+  </div>
+</div>

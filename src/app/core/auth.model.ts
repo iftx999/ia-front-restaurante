@@ -16,4 +16,5 @@ export interface AuthResponse {
   nome: string;
   email: string;
   onboardingConcluido: boolean;
+  emailVerificado: boolean;
 }

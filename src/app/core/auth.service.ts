@@ -11,6 +11,7 @@ export interface UsuarioLogado {
   nome: string;
   email: string;
   onboardingConcluido: boolean;
+  emailVerificado: boolean;
 }
 
 export interface PerfilOnboarding {
@@ -98,12 +99,23 @@ export class AuthService {
     return !!this.getToken();
   }
 
+  /** RF pendente (verificação de e-mail, docs/04-roadmap.md): confirma o token do link enviado no cadastro. */
+  verificarEmail(token: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/verificar-email`, { token });
+  }
+
+  /** Reenvia o e-mail de verificação (novo token) pro usuário logado. */
+  reenviarVerificacaoEmail(): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/reenviar-verificacao`, {});
+  }
+
   private salvarSessao(response: AuthResponse): void {
     localStorage.setItem(TOKEN_KEY, response.token);
     const usuario: UsuarioLogado = {
       nome: response.nome,
       email: response.email,
-      onboardingConcluido: response.onboardingConcluido
+      onboardingConcluido: response.onboardingConcluido,
+      emailVerificado: response.emailVerificado
     };
     localStorage.setItem(USER_KEY, JSON.stringify(usuario));
     this.currentUser.set(usuario);

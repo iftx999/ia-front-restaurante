@@ -21,6 +21,13 @@
   </app-sidebar>
 
   <main class="chat-main">
+    <div class="verificacao-banner" *ngIf="emailNaoVerificado">
+      <span>{{ erroReenvioVerificacao ?? 'Confirme seu e-mail pra garantir o acesso à sua conta.' }}</span>
+      <button type="button" (click)="reenviarVerificacaoEmail()" [disabled]="reenviandoVerificacao || verificacaoReenviada">
+        {{ verificacaoReenviada ? 'E-mail reenviado' : (reenviandoVerificacao ? 'Enviando...' : 'Reenviar e-mail') }}
+      </button>
+    </div>
+
     <div class="messages" #messagesList>
       <div class="empty-state" *ngIf="activeSession.messages.length === 0 && !activeSession.loading">
         <div class="empty-state__icon">
@@ -88,6 +95,31 @@
       </button>
     </div>
 
+    <div class="prompt-atalhos" *ngIf="mostrarAtalhosPrompt">
+      <div class="prompt-atalhos__header">
+        <span>Atalhos de prompt para fotos — clique para adicionar ao texto</span>
+        <button type="button" class="prompt-atalhos__fechar" (click)="toggleAtalhosPrompt()" aria-label="Fechar atalhos">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6 6 18M6 6l12 12" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="prompt-atalhos__categoria" *ngFor="let categoria of categoriasAtalhosPrompt">
+        <p class="prompt-atalhos__titulo">{{ categoria.titulo }}</p>
+        <div class="prompt-atalhos__chips">
+          <button
+            type="button"
+            class="prompt-atalhos__chip"
+            *ngFor="let item of categoria.itens"
+            (click)="inserirAtalho(item.valor)"
+            [title]="item.valor"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <form class="chat-input" (ngSubmit)="sendMessage()">
       <input
         #imagemInput
@@ -108,6 +140,22 @@
             d="M21.44 11.05 12.25 20.24a5 5 0 0 1-7.07-7.07l8.49-8.49a3.5 3.5 0 0 1 4.95 4.95l-8.49 8.49a2 2 0 0 1-2.83-2.83l7.78-7.78"
             stroke-linecap="round"
             stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="chat-input__atalhos"
+        [class.chat-input__atalhos--ativo]="mostrarAtalhosPrompt"
+        [disabled]="activeSession.loading || !!onboardingEtapa"
+        (click)="toggleAtalhosPrompt()"
+        aria-label="Atalhos de prompt para fotos"
+        title="Atalhos de prompt para fotos"
+      >
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path
+            d="M12 3v3M12 18v3M3 12h3M18 12h3M5.8 5.8l2.1 2.1M16.1 16.1l2.1 2.1M18.2 5.8l-2.1 2.1M7.9 16.1l-2.1 2.1"
+            stroke-linecap="round"
           />
         </svg>
       </button>
