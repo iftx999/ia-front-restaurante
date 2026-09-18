@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import {
+  AlertaRelatorioResponse,
   CompararRelatoriosResponse,
   RelatorioResponse,
   RelatorioResumoResponse,
@@ -55,6 +56,11 @@ export class AnaliseService {
 
   listarRelatorios(): Observable<RelatorioResumoResponse[]> {
     return this.http.get<RelatorioResumoResponse[]>(`${this.apiUrl}/relatorio`);
+  }
+
+  /** RF-16: alerta do relatório mais recente do usuário, usado no banner proativo do chat. */
+  obterAlertaMaisRecente(): Observable<AlertaRelatorioResponse> {
+    return this.http.get<AlertaRelatorioResponse>(`${this.apiUrl}/relatorio/alerta`);
   }
 
   compararRelatorios(idAtual: number, idAnterior: number): Observable<CompararRelatoriosResponse> {

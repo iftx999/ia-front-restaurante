@@ -28,6 +28,11 @@
       </button>
     </div>
 
+    <div class="alerta-banner" *ngIf="temAlertaRelatorio">
+      <span>{{ mensagemAlertaRelatorio }}</span>
+      <a routerLink="/analise">Ver relatório</a>
+    </div>
+
     <div class="messages" #messagesList>
       <div class="empty-state" *ngIf="activeSession.messages.length === 0 && !activeSession.loading">
         <div class="empty-state__icon">

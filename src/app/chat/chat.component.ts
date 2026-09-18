@@ -16,6 +16,8 @@ import { ChatService } from './chat.service';
 import { ChatMessage, ChatSession, ConversaResumo, ImagemAnexada } from './chat.model';
 import { AuthService } from '../core/auth.service';
 import { SidebarComponent } from '../shared/sidebar/sidebar.component';
+import { AnaliseService } from '../analise/analise.service';
+import { AlertaRelatorioResponse } from '../analise/analise.model';
 
 const TITULO_PADRAO = 'Nova conversa';
 
@@ -85,7 +87,8 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
     private readonly chatService: ChatService,
     private readonly cdr: ChangeDetectorRef,
     private readonly authService: AuthService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly analiseService: AnaliseService
   ) {
     const usuario = this.authService.currentUser();
     if (usuario && !usuario.onboardingConcluido) {
@@ -97,6 +100,7 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
     }
 
     this.carregarConversas();
+    this.carregarAlertaRelatorio();
   }
 
   get activeSession(): ChatSession {
@@ -133,6 +137,34 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
         this.reenviandoVerificacao = false;
         this.erroReenvioVerificacao = erro.error?.detalhes?.[0] ?? 'Não foi possível reenviar agora.';
         this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /** RF-16: alerta proativo do relatório mais recente (indicador fora da faixa esperada). */
+  alertaRelatorio: AlertaRelatorioResponse | null = null;
+
+  get temAlertaRelatorio(): boolean {
+    return !!this.alertaRelatorio?.temAlerta;
+  }
+
+  get mensagemAlertaRelatorio(): string {
+    const quantidade = this.alertaRelatorio?.quantidadeAlertas ?? 0;
+    return quantidade === 1
+      ? 'Seu último relatório tem 1 indicador fora da faixa esperada.'
+      : `Seu último relatório tem ${quantidade} indicadores fora da faixa esperada.`;
+  }
+
+  private carregarAlertaRelatorio(): void {
+    this.analiseService.obterAlertaMaisRecente().subscribe({
+      next: (resposta) => {
+        this.alertaRelatorio = resposta;
+        this.cdr.markForCheck();
+      },
+      // Silencioso: se a checagem de alerta falhar, o chat continua
+      // funcionando normalmente (não é uma falha crítica pro usuário).
+      error: () => {
+        this.alertaRelatorio = null;
       }
     });
   }

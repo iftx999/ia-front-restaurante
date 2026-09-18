@@ -31,6 +31,16 @@ export interface RelatorioResumoResponse {
   id: number;
   cmvCalculado: number | null;
   geradoEm: string;
+  temAlerta: boolean;
+  quantidadeAlertas: number;
+}
+
+/** Corpo da resposta de GET /api/analise/relatorio/alerta (RF-16, alerta proativo). */
+export interface AlertaRelatorioResponse {
+  temAlerta: boolean;
+  relatorioId: number | null;
+  quantidadeAlertas: number;
+  geradoEm: string | null;
 }
 
 /** Comparação de um prato entre dois relatórios (RF-15). */
