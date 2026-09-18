@@ -77,6 +77,9 @@
             <span class="typing-dot"></span>
           </ng-container>
           <ng-template #textoNormal>
+            <span class="message__modelo" *ngIf="message.role === 'assistant' && message.modeloIa">
+              {{ message.modeloIa === 'gpt' ? 'GPT' : 'Claude' }}
+            </span>
             <img class="message__image" *ngIf="message.imageDataUrl" [src]="message.imageDataUrl" alt="Imagem enviada" />
             <p class="message__text">{{ message.text }}</p>
           </ng-template>
@@ -123,6 +126,25 @@
           </button>
         </div>
       </div>
+    </div>
+
+    <div class="modelo-ia-seletor" *ngIf="!onboardingEtapa" role="group" aria-label="Escolha do modelo de IA">
+      <button
+        type="button"
+        [class.modelo-ia-seletor__opcao--ativa]="modeloIaSelecionado === 'claude'"
+        class="modelo-ia-seletor__opcao"
+        (click)="selecionarModeloIa('claude')"
+      >
+        Claude
+      </button>
+      <button
+        type="button"
+        [class.modelo-ia-seletor__opcao--ativa]="modeloIaSelecionado === 'gpt'"
+        class="modelo-ia-seletor__opcao"
+        (click)="selecionarModeloIa('gpt')"
+      >
+        GPT
+      </button>
     </div>
 
     <form class="chat-input" (ngSubmit)="sendMessage()">

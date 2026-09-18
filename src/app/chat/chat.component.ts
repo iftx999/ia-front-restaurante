@@ -13,13 +13,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 
 import { ChatService } from './chat.service';
-import { ChatMessage, ChatSession, ConversaResumo, ImagemAnexada } from './chat.model';
+import { ChatMessage, ChatSession, ConversaResumo, ImagemAnexada, ModeloIa } from './chat.model';
 import { AuthService } from '../core/auth.service';
 import { SidebarComponent } from '../shared/sidebar/sidebar.component';
 import { AnaliseService } from '../analise/analise.service';
 import { AlertaRelatorioResponse } from '../analise/analise.model';
 
 const TITULO_PADRAO = 'Nova conversa';
+const CHAVE_MODELO_IA_PREFERIDO = 'restoria_modelo_ia_preferido';
 
 type EtapaOnboarding = 'nome' | 'restaurante' | null;
 
@@ -167,6 +168,27 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
         this.alertaRelatorio = null;
       }
     });
+  }
+
+  /** RF-22: escolha manual Claude/GPT, persistida em localStorage (sobrevive a refresh). */
+  modeloIaSelecionado: ModeloIa = this.lerModeloIaPreferido();
+
+  selecionarModeloIa(modelo: ModeloIa): void {
+    this.modeloIaSelecionado = modelo;
+    try {
+      localStorage.setItem(CHAVE_MODELO_IA_PREFERIDO, modelo);
+    } catch {
+      // localStorage indisponível (modo privado, storage bloqueado etc.) — só não persiste entre sessões.
+    }
+  }
+
+  private lerModeloIaPreferido(): ModeloIa {
+    try {
+      const valor = localStorage.getItem(CHAVE_MODELO_IA_PREFERIDO);
+      return valor === 'gpt' ? 'gpt' : 'claude';
+    } catch {
+      return 'claude';
+    }
   }
 
   get placeholderInput(): string {
@@ -341,8 +363,9 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
     sessao.loading = true;
     this.shouldScrollToBottom = true;
 
-    // Mensagem da IA vai sendo preenchida token a token conforme chega.
-    const mensagemIa: ChatMessage = { role: 'assistant', text: '' };
+    // Mensagem da IA vai sendo preenchida token a token conforme chega. O
+    // modelo ja e conhecido no momento do envio (foi o usuario que escolheu).
+    const mensagemIa: ChatMessage = { role: 'assistant', text: '', modeloIa: this.modeloIaSelecionado };
     sessao.messages.push(mensagemIa);
 
     const controller = new AbortController();
@@ -382,7 +405,8 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
         }
       },
       controller.signal,
-      imagem
+      imagem,
+      this.modeloIaSelecionado
     );
   }
 

@@ -1,9 +1,14 @@
+/** Provedor de IA escolhido pelo usuário no chat consultivo (RF-22). Claude é o padrão. */
+export type ModeloIa = 'claude' | 'gpt';
+
 /** Mensagem exibida na tela de chat (modelo de UI, não é o payload da API). */
 export interface ChatMessage {
   role: 'user' | 'assistant';
   text: string;
   /** Data URL da imagem anexada (só existe localmente, não vem do backend num refresh). */
   imageDataUrl?: string;
+  /** Qual modelo respondeu (só em mensagens role 'assistant' geradas nesta sessão). */
+  modeloIa?: ModeloIa;
 }
 
 /** Corpo da requisição enviada para POST /api/chat */
@@ -12,6 +17,7 @@ export interface ChatRequest {
   mensagem: string;
   imagemBase64?: string | null;
   imagemMediaType?: string | null;
+  modeloIa?: ModeloIa;
 }
 
 /** Imagem selecionada pelo usuário, pronta para envio (anexo do chat). */
@@ -25,6 +31,7 @@ export interface ImagemAnexada {
 export interface ChatResponse {
   conversationId: string;
   resposta: string;
+  modeloIa: ModeloIa;
 }
 
 /** Item de GET /api/chat/conversas */

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { ChatRequest, ChatResponse, ConversaDetalhe, ConversaResumo, ImagemAnexada } from './chat.model';
+import { ChatRequest, ChatResponse, ConversaDetalhe, ConversaResumo, ImagemAnexada, ModeloIa } from './chat.model';
 import { AuthService } from '../core/auth.service';
 import { Router } from '@angular/router';
 
@@ -32,8 +32,8 @@ export class ChatService {
     private readonly router: Router
   ) {}
 
-  sendMessage(mensagem: string, conversationId: string | null): Observable<ChatResponse> {
-    const body: ChatRequest = { conversationId, mensagem };
+  sendMessage(mensagem: string, conversationId: string | null, modeloIa?: ModeloIa): Observable<ChatResponse> {
+    const body: ChatRequest = { conversationId, mensagem, modeloIa };
     return this.http.post<ChatResponse>(this.apiUrl, body);
   }
 
@@ -64,13 +64,15 @@ export class ChatService {
     conversationId: string | null,
     handlers: ChatStreamHandlers,
     signal?: AbortSignal,
-    imagem?: ImagemAnexada | null
+    imagem?: ImagemAnexada | null,
+    modeloIa?: ModeloIa
   ): Promise<void> {
     const body: ChatRequest = {
       conversationId,
       mensagem,
       imagemBase64: imagem?.base64 ?? null,
-      imagemMediaType: imagem?.mediaType ?? null
+      imagemMediaType: imagem?.mediaType ?? null,
+      modeloIa
     };
 
     const token = this.authService.getToken();

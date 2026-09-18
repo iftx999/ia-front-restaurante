@@ -468,6 +468,44 @@
   object-fit: cover;
 }
 
+.message__modelo {
+  display: inline-block;
+  margin-bottom: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.modelo-ia-seletor {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 2rem;
+
+  &__opcao {
+    padding: 0.3rem 0.9rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--color-border-strong);
+    }
+
+    &--ativa {
+      border-color: var(--color-accent-strong);
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+    }
+  }
+}
+
 .chat-input {
   display: flex;
   align-items: center;
@@ -621,6 +659,10 @@
   .verificacao-banner,
   .alerta-banner {
     margin: 0.75rem 1rem 0;
+  }
+
+  .modelo-ia-seletor {
+    padding: 0 1rem;
   }
 
   .image-error,
