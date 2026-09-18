@@ -18,6 +18,7 @@ import { AuthService } from '../core/auth.service';
 import { SidebarComponent } from '../shared/sidebar/sidebar.component';
 import { AnaliseService } from '../analise/analise.service';
 import { AlertaRelatorioResponse } from '../analise/analise.model';
+import { ImagemService } from '../imagem/imagem.service';
 
 const TITULO_PADRAO = 'Nova conversa';
 const CHAVE_MODELO_IA_PREFERIDO = 'restoria_modelo_ia_preferido';
@@ -89,7 +90,8 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
     private readonly cdr: ChangeDetectorRef,
     private readonly authService: AuthService,
     private readonly router: Router,
-    private readonly analiseService: AnaliseService
+    private readonly analiseService: AnaliseService,
+    private readonly imagemService: ImagemService
   ) {
     const usuario = this.authService.currentUser();
     if (usuario && !usuario.onboardingConcluido) {
@@ -408,6 +410,85 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
       imagem,
       this.modeloIaSelecionado
     );
+  }
+
+  /**
+   * Geracao/edicao de imagem de prato via IA (plano PRO — ver
+   * docs/06-geracao-imagem-ia.md). Diferente de {@link sendMessage}: nao usa
+   * streaming (a API de imagens nao suporta) e o resultado e uma imagem, nao
+   * texto. Com uma imagem anexada (pendingImage), edita-a; sem anexo, gera
+   * uma nova a partir do prompt.
+   */
+  gerarImagem(): void {
+    if (this.onboardingEtapa) {
+      return;
+    }
+
+    const prompt = this.currentMessage.trim();
+    const imagem = this.pendingImage;
+    const sessao = this.activeSession;
+    if (!prompt || sessao.loading) {
+      return;
+    }
+
+    if (sessao.messages.length === 0) {
+      sessao.title = prompt.length > 40 ? prompt.slice(0, 40) + '…' : prompt;
+    }
+
+    sessao.messages.push({ role: 'user', text: prompt, imageDataUrl: imagem?.dataUrl });
+    this.currentMessage = '';
+    this.pendingImage = null;
+    this.imageError = null;
+    this.mostrarAtalhosPrompt = false;
+    sessao.errorMessage = null;
+    sessao.limiteUsoExcedido = false;
+    sessao.loading = true;
+    this.shouldScrollToBottom = true;
+
+    const mensagemResultado: ChatMessage = { role: 'assistant', text: 'Gerando imagem...' };
+    sessao.messages.push(mensagemResultado);
+
+    const chamada = imagem
+      ? this.imagemService.editar(prompt, imagem.base64, imagem.mediaType)
+      : this.imagemService.gerar(prompt);
+
+    chamada.subscribe({
+      next: (resposta) => {
+        this.imagemService.baixarArquivo(resposta.id).subscribe({
+          next: (blob) => {
+            mensagemResultado.text = '';
+            mensagemResultado.resultImageUrl = URL.createObjectURL(blob);
+            mensagemResultado.resultImageId = resposta.id;
+            sessao.loading = false;
+            this.shouldScrollToBottom = true;
+            this.cdr.markForCheck();
+          },
+          error: () => this.finalizarComErroImagem(sessao, mensagemResultado, 'Imagem gerada, mas não foi possível carregá-la.')
+        });
+      },
+      error: (erro: HttpErrorResponse) => {
+        const limiteUsoExcedido = erro.status === 402;
+        const mensagemErro = erro.error?.detalhes?.[0] ?? 'Não foi possível gerar a imagem agora.';
+        this.finalizarComErroImagem(sessao, mensagemResultado, mensagemErro, limiteUsoExcedido);
+      }
+    });
+  }
+
+  private finalizarComErroImagem(
+    sessao: ChatSession,
+    mensagemResultado: ChatMessage,
+    mensagemErro: string,
+    limiteUsoExcedido = false
+  ): void {
+    const indice = sessao.messages.indexOf(mensagemResultado);
+    if (indice !== -1) {
+      sessao.messages.splice(indice, 1);
+    }
+    sessao.errorMessage = mensagemErro;
+    sessao.limiteUsoExcedido = limiteUsoExcedido;
+    sessao.loading = false;
+    this.shouldScrollToBottom = true;
+    this.cdr.markForCheck();
   }
 
   private responderOnboarding(): void {

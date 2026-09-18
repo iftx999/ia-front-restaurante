@@ -9,6 +9,10 @@ export interface ChatMessage {
   imageDataUrl?: string;
   /** Qual modelo respondeu (só em mensagens role 'assistant' geradas nesta sessão). */
   modeloIa?: ModeloIa;
+  /** Object URL (blob) da imagem gerada/editada via IA — resultado de POST /api/imagens/gerar|editar. */
+  resultImageUrl?: string;
+  /** Id de ImagemPrato no backend, usado pro nome do arquivo de download. */
+  resultImageId?: number;
 }
 
 /** Corpo da requisição enviada para POST /api/chat */

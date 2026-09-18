@@ -81,7 +81,17 @@
               {{ message.modeloIa === 'gpt' ? 'GPT' : 'Claude' }}
             </span>
             <img class="message__image" *ngIf="message.imageDataUrl" [src]="message.imageDataUrl" alt="Imagem enviada" />
-            <p class="message__text">{{ message.text }}</p>
+            <p class="message__text" *ngIf="message.text">{{ message.text }}</p>
+            <ng-container *ngIf="message.resultImageUrl">
+              <img class="message__result-image" [src]="message.resultImageUrl" alt="Imagem gerada por IA" />
+              <a
+                class="message__download"
+                [href]="message.resultImageUrl"
+                [download]="'restoria-prato-' + message.resultImageId + '.png'"
+              >
+                Baixar imagem
+              </a>
+            </ng-container>
           </ng-template>
         </div>
       </div>
@@ -184,6 +194,20 @@
             d="M12 3v3M12 18v3M3 12h3M18 12h3M5.8 5.8l2.1 2.1M16.1 16.1l2.1 2.1M18.2 5.8l-2.1 2.1M7.9 16.1l-2.1 2.1"
             stroke-linecap="round"
           />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="chat-input__gerar-imagem"
+        [disabled]="activeSession.loading || !!onboardingEtapa || !currentMessage.trim()"
+        (click)="gerarImagem()"
+        aria-label="Gerar imagem do prato com IA"
+        title="Gerar imagem do prato com IA (plano PRO)"
+      >
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <path d="m21 15-5-5L5 21" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </button>
       <textarea
